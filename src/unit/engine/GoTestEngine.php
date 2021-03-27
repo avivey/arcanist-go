@@ -8,6 +8,7 @@ final class GoTestEngine extends ArcanistUnitTestEngine {
   const USE_GODEP_KEY = 'unit.go.godep';
   const USE_RACE_KEY = 'unit.go.race';
   const USE_SHORT_KEY = 'unit.go.short';
+  const BUILD_TAGS_KEY = 'unit.go.buildtags';
   private $projectRoot;
 
   public function run() {
@@ -68,6 +69,10 @@ final class GoTestEngine extends ArcanistUnitTestEngine {
     return true;
   }
 
+  public function getEngineConfigurationName() {
+    return 'go-test';
+  }
+
   protected function getVersion() {
     $cmd = csprintf('%s version', $this->getBinary());
     list($stdout) = execx('%C', $cmd);
@@ -106,7 +111,10 @@ final class GoTestEngine extends ArcanistUnitTestEngine {
       $cmd .= ' -race';
     }
 
-    $cmd .= ' ./';
+    $build_tags = $this->getBuildTags();
+    if (strlen($build_tags)) {
+      $cmd .= ' -tags='.$build_tags;
+    }
 
     return $cmd;
   }
@@ -146,6 +154,10 @@ final class GoTestEngine extends ArcanistUnitTestEngine {
     return false;
   }
 
+  protected function getBuildTags() {
+    return $this->getConfig(self::BUILD_TAGS_KEY);
+  }
+
   protected function getConfig($key, $default = null) {
     return $this->getConfigurationManager()->getConfigFromAnySource(
       $key,
@@ -183,7 +195,7 @@ final class GoTestEngine extends ArcanistUnitTestEngine {
       }
 
       $future = new ExecFuture(
-        '%C%C',
+        '%C ./%C',
         $cmd_tmpl,
         $package);
       $future->setCWD($this->projectRoot);
