@@ -93,7 +93,10 @@ final class GoTestEngine extends ArcanistUnitTestEngine {
       $cmd = 'godep ';
     }
 
-    $cmd .= 'go test -v';
+    // `-v` is used for the parser. It should be replaced with `-json` to
+    // improve performance.
+    // Cached tests seem to break the parser; `-count=1` disables cache.
+    $cmd .= 'go test -v -count=1';
 
     if ($this->useShort()) {
       $cmd .= " -short";
